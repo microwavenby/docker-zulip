@@ -3,12 +3,9 @@ services:
   database:
     image: "zulip/zulip-postgresql:14"
     restart: unless-stopped
-    secrets:
-      - zulip__postgres_password
     environment:
       POSTGRES_DB: "zulip"
       POSTGRES_USER: "zulip"
-      POSTGRES_PASSWORD_FILE: /run/secrets/zulip__postgres_password
     volumes:
       - "postgresql-14:/var/lib/postgresql/data:rw"
     attach: false
@@ -23,12 +20,9 @@ services:
         echo "zulip@$$HOSTNAME:$$(cat $$MEMCACHED_PASSWORD_FILE)" > "$$MEMCACHED_SASL_PWDB"
         echo "zulip@localhost:$$(cat $$MEMCACHED_PASSWORD_FILE)" >> "$$MEMCACHED_SASL_PWDB"
         exec memcached -S
-    secrets:
-      - zulip__memcached_password
     environment:
       SASL_CONF_PATH: "/home/memcache/memcached.conf"
       MEMCACHED_SASL_PWDB: "/home/memcache/memcached-sasl-db"
-      MEMCACHED_PASSWORD_FILE: /run/secrets/zulip__memcached_password
     attach: false
   rabbitmq:
     image: "rabbitmq:4.2"
@@ -41,11 +35,8 @@ services:
         echo 'default_user = $$(RABBITMQ_DEFAULT_USER)' >> /etc/rabbitmq/rabbitmq.conf
         echo 'default_pass = $$(RABBITMQ_DEFAULT_PASS)' >> /etc/rabbitmq/rabbitmq.conf
         exec docker-entrypoint.sh rabbitmq-server
-    secrets:
-      - zulip__rabbitmq_password
     environment:
       RABBITMQ_DEFAULT_USER: "zulip"
-      RABBITMQ_PASSWORD_FILE: /run/secrets/zulip__rabbitmq_password
     volumes:
       - "rabbitmq:/var/lib/rabbitmq:rw"
     attach: false
@@ -56,10 +47,6 @@ services:
       - "sh"
       - "-euc"
       - '/usr/local/bin/docker-entrypoint.sh --requirepass "$$(cat $$REDIS_PASSWORD_FILE)"'
-    secrets:
-      - zulip__redis_password
-    environment:
-      REDIS_PASSWORD_FILE: /run/secrets/zulip__redis_password
     volumes:
       - "redis:/data:rw"
     attach: false
@@ -81,13 +68,6 @@ services:
         target: 443
         published: 443
         app_protocol: https
-    secrets:
-      - zulip__postgres_password
-      - zulip__memcached_password
-      - zulip__rabbitmq_password
-      - zulip__redis_password
-      - zulip__secret_key
-      - zulip__email_password
     environment:
       # Default hostnames; configure your application in compose.override.yaml
       SETTING_REMOTE_POSTGRES_HOST: "database"
