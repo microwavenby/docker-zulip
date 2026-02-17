@@ -6,6 +6,7 @@ services:
     environment:
       POSTGRES_DB: "zulip"
       POSTGRES_USER: "zulip"
+      POSTGRES_PASSWORD: $ZULIP__POSTGRES_PASSWORD
     volumes:
       - "postgresql-14:/var/lib/postgresql/data:rw"
     attach: false
@@ -17,8 +18,8 @@ services:
       - "-euc"
       - |
         echo 'mech_list: plain' > "$$SASL_CONF_PATH"
-        echo "zulip@$$HOSTNAME:$$(cat $$MEMCACHED_PASSWORD_FILE)" > "$$MEMCACHED_SASL_PWDB"
-        echo "zulip@localhost:$$(cat $$MEMCACHED_PASSWORD_FILE)" >> "$$MEMCACHED_SASL_PWDB"
+        echo "zulip@$$HOSTNAME:$$ZULIP__MEMCACHED_PASSWORD" > "$$MEMCACHED_SASL_PWDB"
+        echo "zulip@localhost:$$ZULIP__MEMCACHED_PASSWORD" >> "$$MEMCACHED_SASL_PWDB"
         exec memcached -S
     environment:
       SASL_CONF_PATH: "/home/memcache/memcached.conf"
@@ -31,9 +32,8 @@ services:
       - "sh"
       - "-euc"
       - |
-        export RABBITMQ_DEFAULT_PASS="$$(cat $$RABBITMQ_PASSWORD_FILE)"
         echo 'default_user = $$(RABBITMQ_DEFAULT_USER)' >> /etc/rabbitmq/rabbitmq.conf
-        echo 'default_pass = $$(RABBITMQ_DEFAULT_PASS)' >> /etc/rabbitmq/rabbitmq.conf
+        echo 'default_pass = $$(ZULIP__RABBITMQ_PASSWORD)' >> /etc/rabbitmq/rabbitmq.conf
         exec docker-entrypoint.sh rabbitmq-server
     environment:
       RABBITMQ_DEFAULT_USER: "zulip"
@@ -46,7 +46,7 @@ services:
     command:
       - "sh"
       - "-euc"
-      - '/usr/local/bin/docker-entrypoint.sh --requirepass "$$(cat $$REDIS_PASSWORD_FILE)"'
+      - '/usr/local/bin/docker-entrypoint.sh --requirepass "($$ZULIP__REDIS_PASSWORD)"'
     volumes:
       - "redis:/data:rw"
     attach: false
